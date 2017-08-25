@@ -1,0 +1,26 @@
+{
+  "name": "purescript-mathbox",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rintcius/purescript-mathbox.git"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "mathbox": "~0.0.5",
+    "purescript-console": "~3.0.0",
+    "purescript-foreign": "~4.0.0",
+    "purescript-free": "~4.0.0",
+    "purescript-globals": "~3.0.0",
+    "purescript-nullable": "~3.0.0",
+    "purescript-maps": "~3.0.0",
+    "purescript-lens": "~3.0.0",
+    "purescript-either": "~3.0.0",
+    "purescript-signal": "~9.0.0"
+  }
+}
