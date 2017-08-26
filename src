@@ -1,0 +1,122 @@
+{--Hello!
+The project given to me create a 3D cube using purescript.I tried my best using "MATHBOX Library"f
+--}
+module Main where
+--| hiding add function because Mathbox.Mathbox because has add fuction conflict erasies
+import Control.Monad.Eff (Eff)
+import Data.Foreign (Foreign)
+import Data.Foreign.Class (encode)
+import Data.List (fromFoldable)
+import Data.Maybe (Maybe(..))
+import Mathbox.Classes as C
+import Mathbox.Field (Field(..))
+import Mathbox.Mathbox (MATHBOX, Mathbox, MathboxPrimitive(..), add, applyOnThree, colorWhite, mkMathbox, orbitControls, setThreeClearColor, toJs)
+import Mathbox.Types (Vec3,mkSwizzle1,mkVec2,mkVec3,unsafeMkColor)
+import Prelude
+
+--import Data.Array as A
+
+-- | Write is in Data.Foreign.Class
+matrixData :: Foreign
+matrixData = encode [
+  [
+    [-1, -1,  -1],
+    [-1, -1,  -1],
+    [ 1, -1,  -1],
+    [ 1, -1,  -1]],
+  [
+    [-1, -1,  -1],
+    [-1, -1,  1],
+    [ 1, -1,  1],
+    [ 1, -1,  -1]]
+]
+
+
+-- it creates all the surface as faces and pack together to make cube
+-- it calls the cartesian fun with an array of function
+mathbox :: MathboxPrimitive
+mathbox =
+  cartesian [
+    cam,
+    matrix,
+    cube
+  ]
+
+  -- (Interval $ C.mkInterval { width = Just $ Val $ A.length text, expr = textIntervalExpr, channels = Val 2 }) :
+  -- (Format $ C.mkFormat { data = Just $ Val $ toForeign text }) :
+  -- (Label $ C.mkLabel { size = Val 20.0 }) :
+  -- Nil
+
+cartesian :: Array MathboxPrimitive -> MathboxPrimitive
+cartesian nested =
+    (Cartesian $ C.mkCartesian {
+      range = Val [mkVec2 (-2) 2, mkVec2 (-2) 2, mkVec2 (-2) 2],
+      scale = Val (mkVec3 1 1 1)
+    }) ( fromFoldable nested )
+
+-- camera view function
+-- set the position of camera in Surface
+cam :: MathboxPrimitive
+cam = Camera $ C.mkCamera { proxy = Val true, position = Just $ Val $ mkVec3 2 3 3 }
+
+--constructing cube from matrix
+matrix :: MathboxPrimitive
+matrix = Matrix $ C.mkMatrix { data = Just $ Val matrixData, channels = Val 3 }
+
+--| side function takes 2 params i.e (Color => String , Opacity => Number)
+-- contruct a single Surface in 2d
+side :: String -> MathboxPrimitive
+--| Surface is a Constructor mkSurface has color,opacity variables
+side color = Surface $ C.mkSurface { color = Val $ unsafeMkColor color }
+
+-- transform while drag with cursor
+transform :: Vec3 -> Array MathboxPrimitive -> MathboxPrimitive
+transform v3 nested = (Transform3 $ C.mkTransform3 { position = Val $ v3 }) ( fromFoldable nested )
+
+-- combine all surface and make as single group
+dataset :: Array MathboxPrimitive -> MathboxPrimitive
+dataset nested = (Group $ C.mkGroup { active = Val true }) ( fromFoldable nested )
+
+-- used to integrate all the six phase of cube
+swizzle :: Array Int -> MathboxPrimitive
+swizzle s = Swizzle $ C.mkSwizzle { order = Val $ mkSwizzle1 s }
+-- setside :: MathboxPrimitive
+-- setside = side "yellow"
+cube ::  MathboxPrimitive
+cube  =
+        dataset [
+                side "yellow"  ,
+                transform (mkVec3 0 2 0)
+                [
+                  side "red" ,
+                  transform (mkVec3 0 (-2) 0)
+                  [
+                    swizzle [2, 3, 1],
+                    side "blue" ,
+                    transform (mkVec3 2 0 0)
+                    [
+                      side "black" ,
+                      transform (mkVec3 (-2) 0 0)
+                      [
+                        swizzle [3, 2, 1],
+                        side "orange" ,
+                        transform (mkVec3 0 0 2)
+                        [
+                          side "gray"
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+
+
+
+main :: Eff (mathbox :: MATHBOX) Mathbox
+main = do
+  mkMathbox { plugins: ["core", "controls"]
+            , controls: { klass: orbitControls }
+            } >>=
+              applyOnThree (setThreeClearColor colorWhite 1.0) >>=
+
+  add (toJs mathbox)
